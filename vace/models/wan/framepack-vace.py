@@ -733,7 +733,79 @@ class WanVace(WanT2V):
         print(f"Building context from {total_frames} accumulated frames")
         
         return all_prev
+    def create_temporal_blend_mask_v2(self, frame_shape, section_id, initial=False):
+        """
+        Enhanced mask creation
+        
+        """
+        
+        # Constants matching pick_context_v2
+        LONG_FRAMES = 5
+        MID_FRAMES = 3
+        RECENT_FRAMES = 1
+        OVERLAP_FRAMES = 2
+        GEN_FRAMES = 23
+        TOTAL_FRAMES = 34
+        
+        C, T, H, W = frame_shape
+        
+        mask = torch.zeros(1, TOTAL_FRAMES, H, W, device=self.device)
+        
+        if initial:
+          
+            mask[:, :TOTAL_FRAMES-GEN_FRAMES] = 0.0  
+            mask[:, -GEN_FRAMES:] = 1.0 
+            return [mask]
+        
+        idx = 0
+        
+        mask[:, idx:idx+LONG_FRAMES] = 0.05  
+        idx += LONG_FRAMES
+        
+        mask[:, idx:idx+MID_FRAMES] = 0.2
+        idx += MID_FRAMES
+        
+        mask[:, idx:idx+RECENT_FRAMES] = 0.3
+        idx += RECENT_FRAMES
+        
+        for i in range(OVERLAP_FRAMES):
+            blend_value = 0.4 + (i / (OVERLAP_FRAMES - 1)) * 0.4
+            mask[:, idx+i] = blend_value
+        idx += OVERLAP_FRAMES
+        
+        mask[:, idx:] = 1.0
+        
+        if section_id > 0:
+            overlap_start = LONG_FRAMES + MID_FRAMES + RECENT_FRAMES
+            for i in range(OVERLAP_FRAMES):
+                spatial_variation = self.create_spatial_variation(H, W)
+                mask[:, overlap_start+i] *= (0.8 + 0.2 * spatial_variation)
+        
+        if section_id % 5 == 0:
+            print(f"\nMask debug (section {section_id}):")
+            for name, start, length in [
+                ("Long", 0, LONG_FRAMES),
+                ("Mid", LONG_FRAMES, MID_FRAMES),
+                ("Recent", LONG_FRAMES+MID_FRAMES, RECENT_FRAMES),
+                ("Overlap", LONG_FRAMES+MID_FRAMES+RECENT_FRAMES, OVERLAP_FRAMES),
+                ("Gen", LONG_FRAMES+MID_FRAMES+RECENT_FRAMES+OVERLAP_FRAMES, GEN_FRAMES)
+            ]:
+                mean_val = mask[0, start:start+length, 0, 0].mean().item()
+                print(f"  {name}: {mean_val:.3f}")
+        
+        return [mask]
     
+    def create_spatial_variation(self, H, W):
+        """Create spatial variation mask for natural blending."""
+        y_coords = torch.linspace(-1, 1, H, device=self.device)
+        x_coords = torch.linspace(-1, 1, W, device=self.device)
+        y_grid, x_grid = torch.meshgrid(y_coords, x_coords, indexing='ij')
+        
+       
+        distance = torch.sqrt(x_grid**2 + y_grid**2) / 1.414  
+        variation = 1.0 - 0.3 * torch.exp(-3 * distance**2)
+        
+        return variation
 class WanVaceMP(WanVace):
     def __init__(
             self,

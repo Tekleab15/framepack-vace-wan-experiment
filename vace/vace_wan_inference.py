@@ -19,6 +19,7 @@ import wan
 from wan.utils.utils import cache_video, cache_image, str2bool
 
 from models.wan import WanVace
+from models.wan import FramepackVace
 from models.wan.configs import WAN_CONFIGS, SIZE_CONFIGS, MAX_AREA_CONFIGS, SUPPORTED_SIZES
 from annotators.utils import get_annotator
 
@@ -271,7 +272,7 @@ def main(args):
         logging.info(f"Extended prompt: {args.prompt}")
 
     logging.info("Creating WanT2V pipeline.")
-    wan_vace = WanVace(
+    framepack_vace = FramepackVace(
         config=cfg,
         checkpoint_dir=args.ckpt_dir,
         device_id=device,
@@ -288,7 +289,7 @@ def main(args):
                                                                   args.frame_num, SIZE_CONFIGS[args.size], device)
 
     logging.info(f"Generating video...")
-    video = wan_vace.generate(
+    video = framepack_vace.generate_with_framepack(
         args.prompt,
         src_video,
         src_mask,
