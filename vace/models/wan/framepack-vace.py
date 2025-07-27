@@ -598,6 +598,95 @@ class WanVace(WanT2V):
         
         return appearance, motion
     
+    def pick_context_v2(self, frames, section_id, initial=False):
+        """
+        Enhanced hierarchical context selection with constant 22-frame output.
+        
+        Changes from original:
+        1. Better handling of initial frames
+        2. More robust frame selection with proper bounds checking
+        3. Improved debugging output
+        """
+        
+        # Constants
+        LONG_FRAMES = 5
+        MID_FRAMES = 3
+        RECENT_FRAMES = 1
+        OVERLAP_FRAMES = 2
+        GEN_FRAMES = 23
+        TOTAL_FRAMES = 34
+        
+        C, T, H, W = frames.shape
+        
+        if initial and T == TOTAL_FRAMES:
+            return frames
+      
+        if initial and T < TOTAL_FRAMES:
+            padding_needed = TOTAL_FRAMES - T
+            padding = torch.zeros((C, padding_needed, H, W), device=frames.device)
+            return torch.cat([frames, padding], dim=1)
+        
+        selected_indices = []
+        
+        if T >= 40:
+            step = max(4, T // 20)
+            long_indices = []
+            for i in range(LONG_FRAMES):
+                idx = min(i * step, T - 15)  
+                long_indices.append(idx)
+            selected_indices.extend(long_indices)
+        else:
+            # Not enough frames - take evenly spaced
+            if T >= LONG_FRAMES:
+                step = T // LONG_FRAMES
+                long_indices = [i * step for i in range(LONG_FRAMES)]
+            else:
+                long_indices = list(range(T))
+                # Pad by repeating last frame
+                while len(long_indices) < LONG_FRAMES:
+                    long_indices.append(T - 1)
+            selected_indices.extend(long_indices[:LONG_FRAMES])
+        
+        mid_start = max(LONG_FRAMES, T - 15)
+        mid_indices = [
+            min(mid_start, T - 1),
+            min(mid_start + 2, T - 1)
+        ]
+        selected_indices.extend(mid_indices)
+        
+        recent_idx = max(0, T - 5)
+        selected_indices.append(recent_idx)
+        
+        overlap_start = max(0, T - OVERLAP_FRAMES)
+        overlap_indices = list(range(overlap_start, T))
+       
+        while len(overlap_indices) < OVERLAP_FRAMES:
+            overlap_indices.append(T - 1)
+        selected_indices.extend(overlap_indices[:OVERLAP_FRAMES])
+        context_frames = frames[:, selected_indices, :, :]
+        
+        gen_placeholder = torch.zeros((C, GEN_FRAMES, H, W), device=frames.device)
+        
+        final_frames = torch.cat([
+            context_frames[:, :LONG_FRAMES],     
+            context_frames[:, LONG_FRAMES:LONG_FRAMES+MID_FRAMES],  
+            context_frames[:, LONG_FRAMES+MID_FRAMES:LONG_FRAMES+MID_FRAMES+RECENT_FRAMES], 
+            context_frames[:, -OVERLAP_FRAMES:],  
+            gen_placeholder                       
+        ], dim=1)
+        
+        assert final_frames.shape[1] == TOTAL_FRAMES, \
+            f"Expected {TOTAL_FRAMES} frames, got {final_frames.shape[1]}"
+        
+        if section_id % 5 == 0:
+            print(f"\nContext selection debug (section {section_id}):")
+            print(f"  Input frames: {T}")
+            print(f"  Selected indices: {selected_indices}")
+            print(f"  Output shape: {final_frames.shape}")
+        
+        return final_frames
+
+    
 
     def save_section_debug(self, video_tensor, section_id, accumulated_latents):
         """Enhanced debugging output with more information."""
@@ -629,7 +718,21 @@ class WanVace(WanT2V):
         
         print(f"Saved debug output to {output_path}")
 
-   
+    
+    def build_hierarchical_context_latent(self, accumulated_latents, section_id):
+        """
+        Build hierarchical context from accumulated latents.
+        
+        """
+        if not accumulated_latents:
+            raise ValueError("No accumulated latents available")
+        
+        all_prev = torch.cat(accumulated_latents, dim=1)
+        total_frames = all_prev.shape[1]
+        
+        print(f"Building context from {total_frames} accumulated frames")
+        
+        return all_prev
     
 class WanVaceMP(WanVace):
     def __init__(
