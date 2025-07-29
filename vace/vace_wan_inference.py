@@ -283,7 +283,7 @@ def main(args):
         t5_cpu=args.t5_cpu,
     )
 
-    src_video, src_mask, src_ref_images = wan_vace.prepare_source([args.src_video],
+    src_video, src_mask, src_ref_images = framepack_vace.prepare_source([args.src_video],
                                                                   [args.src_mask],
                                                                   [None if args.src_ref_images is None else args.src_ref_images.split(',')],
                                                                   args.frame_num, SIZE_CONFIGS[args.size], device)
