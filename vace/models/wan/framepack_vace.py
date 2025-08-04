@@ -517,7 +517,7 @@ class FramepackVace(WanT2V):
                 print(f"Section 0: Removing {1} reference frames from latent")
 
 
-                latent_without_ref = latents[0][:, 1:-5, :, :]
+                latent_without_ref = latents[0][:, 1:-10, :, :]
                 accumulated_latents.append(latent_without_ref)
 
 
@@ -535,7 +535,7 @@ class FramepackVace(WanT2V):
                 else:
                     # Take only newly generated frames
                     new_content = latents[0][:, -GENERATION_FRAMES:, :, :]
-                    new_content = new_content[:, 10:, :, :]
+                    new_content = new_content[:, 11:, :, :]
                     all_generated_latents.append(new_content)
                     del new_content
             torch.cuda.synchronize()    
