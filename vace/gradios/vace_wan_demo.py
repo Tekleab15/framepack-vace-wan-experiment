@@ -15,7 +15,6 @@ import wan
 from vace.models.wan.wan_vace import WanVace, WanVaceMP
 from vace.models.wan.configs import WAN_CONFIGS, SIZE_CONFIGS
 
-
 class FixedSizeQueue:
     def __init__(self, max_size):
         self.max_size = max_size

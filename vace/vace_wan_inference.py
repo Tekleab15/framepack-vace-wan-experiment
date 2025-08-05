@@ -33,9 +33,6 @@ EXAMPLE_PROMPT = {
     }
 }
 
-
-
-
 def validate_args(args):
     # Basic check
     assert args.ckpt_dir is not None, "Please specify the checkpoint directory."
@@ -59,7 +56,6 @@ def validate_args(args):
     assert args.size in SUPPORTED_SIZES[
         args.model_name], f"Unsupport size {args.size} for model name {args.model_name}, supported sizes are: {', '.join(SUPPORTED_SIZES[args.model_name])}"
     return args
-
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -180,7 +176,6 @@ def get_parser():
         help="Classifier free guidance scale.")
     return parser
 
-
 def _init_logging(rank):
     # logging
     if rank == 0:
@@ -191,7 +186,6 @@ def _init_logging(rank):
             handlers=[logging.StreamHandler(stream=sys.stdout)])
     else:
         logging.basicConfig(level=logging.ERROR)
-
 
 def main(args):
     args = argparse.Namespace(**args) if isinstance(args, dict) else args
@@ -218,7 +212,7 @@ def main(args):
         assert not (
             args.t5_fsdp or args.dit_fsdp
         ), f"t5_fsdp and dit_fsdp are not supported in non-distributed environments."
-        assert not (
+        assert not ( 
             args.ulysses_size > 1 or args.ring_size > 1
         ), f"context parallel are not supported in non-distributed environments."
 
