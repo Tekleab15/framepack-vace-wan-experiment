@@ -8,6 +8,7 @@ import comfy.sd
 from ..models.wan.framepack_vace import FramepackVace
 from ..models.utils.preprocessor import VaceVideoProcessor
 
+
 class VACE_FRAMEPACK_MODEL_LOADER:
     @classmethod
     def INPUT_TYPES(s):
