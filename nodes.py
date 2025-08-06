@@ -108,3 +108,56 @@ class VACE_FRAMEPACK_VIDEO_INPUT_PREPROCESSOR:
         }
 
         return (source_data,)
+
+class VACE_FRAMEPACK_SAMPLER:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model": ("VACE_FRAMEPACK_MODEL",),
+                "source_data": ("VACE_SOURCE_DATA",),
+                "prompt": ("STRING", {"multiline": True}),
+                "negative_prompt": ("STRING", {"multiline": True, "default": ""}),
+                "sampling_steps": ("INT", {"default": 50, "min": 1}),
+                "guide_scale": ("FLOAT", {"default": 5.0, "min": 0.0, "max": 30.0}),
+                "sample_solver": (["unipc", "dpm++"], {"default": "unipc"}),
+                "sample_shift": ("FLOAT", {"default": 16.0, "min": 0.0}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT",)
+    RETURN_NAMES = ("latent_video",)
+    FUNCTION = "sample_video"
+    CATEGORY = "VACE/Framepack"
+    DESCRIPTION = "Generates video using VACE Framepack model."
+    
+    def sample_video(self, model, source_data, prompt, negative_prompt, sampling_steps, guide_scale,
+                     sample_solver, sample_shift, seed):
+        
+        src_video = source_data["src_video"]
+        src_mask = source_data["src_mask"]
+        src_ref_images = source_data["src_ref_images"]
+        output_width = source_data["output_width"]
+        output_height = source_data["output_height"]
+        num_frames = source_data["num_frames"]
+        
+        # ComfyUI often expects a dict for latent, so we convert src_video to that format
+        generated_video = model.generate_with_framepack(
+            input_prompt=prompt,
+            input_frames=src_video,
+            input_masks=src_mask,
+            input_ref_images=src_ref_images,
+            size=(output_width, output_height),
+            frame_num=num_frames,
+            sampling_steps=sampling_steps,
+            guide_scale=guide_scale,
+            sample_solver=sample_solver,
+            shift=sample_shift,
+            seed=seed,
+            n_prompt=negative_prompt,
+            offload_model=True
+        )
+        
+        # The ComfyUI LATENT format expects a dictionary with a 'samples' key
+        return ({"samples": generated_video},)
