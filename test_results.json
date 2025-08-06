@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-08-06 08:25:58",
+  "device": "cuda:0",
+  "results": {
+    "components": true,
+    "encoding": true,
+    "context": true,
+    "masks": true,
+    "generation": true
+  },
+  "passed": 5,
+  "total": 5
+}
