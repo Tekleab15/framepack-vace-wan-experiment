@@ -188,7 +188,6 @@ class VACE_FRAMEPACK_SAMPLER:
         # The ComfyUI LATENT format expects a dictionary with a 'samples' key
         return ({"samples": generated_video},)
 
-
 NODE_CLASS_MAPPINGS = {
     "VACE_Framepack_ModelLoader": VACE_FRAMEPACK_MODEL_LOADER,
     "VACE_Framepack_VideoInputPreprocessor": VACE_FRAMEPACK_VIDEO_INPUT_PREPROCESSOR,
