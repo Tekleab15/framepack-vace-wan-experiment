@@ -1,0 +1,265 @@
+{
+  "last_node_id": 90,
+  "nodes": [
+    {
+      "id": 10,
+      "type": "CLIPTextEncode",
+      "pos": [
+        200,
+        400
+      ],
+      "size": [
+        350,
+        150
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "widgets_values": [
+        "A calm and confident cartoon girl leading a meditation session moving her arms expressively, speaking gently with relaxed facial expressions. She gestures naturally with her hands and arms, using smooth, expressive movements that match her words. Her lips are in sync with the audio, and her demeanor is peaceful and reassuring.ghibli anime style"
+      ]
+    },
+    {
+      "id": 15,
+      "type": "VACE_Framepack_ModelLoader",
+      "pos": [
+        200,
+        0
+      ],
+      "size": [
+        350,
+        150
+      ],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "FRAMEPACK_VACE_MODEL",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "widgets_values": [
+        "models/Wan2.1-VACE-1.3B/",
+        "vace-1.3B",
+        "bf16",
+        0,
+        false
+      ]
+    },
+    {
+      "id": 20,
+      "type": "VACE_Framepack_VideoInputPreprocessor",
+      "pos": [
+        600,
+        0
+      ],
+      "size": [
+        450,
+        200
+      ],
+      "inputs": [
+        {
+          "name": "model",
+          "type": "FRAMEPACK_VACE_MODEL",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "source_data",
+          "type": "VACE_SOURCE_DATA",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "widgets_values": [
+        81,
+        768,
+        512,
+        "",
+        "",
+        "start_img.png"
+      ]
+    },
+    {
+      "id": 30,
+      "type": "VACE_Framepack_Sampler",
+      "pos": [
+        1100,
+        0
+      ],
+      "size": [
+        400,
+        300
+      ],
+      "inputs": [
+        {
+          "name": "model",
+          "type": "FRAMEPACK_VACE_MODEL",
+          "link": 2
+        },
+        {
+          "name": "source_data",
+          "type": "VACE_SOURCE_DATA",
+          "link": 3
+        },
+        {
+          "name": "positive_conditioning",
+          "type": "CONDITIONING",
+          "link": 1
+        },
+        {
+          "name": "negative_conditioning",
+          "type": "CONDITIONING",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "latent_video",
+          "type": "LATENT",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "widgets_values": [
+        50,
+        5.0,
+        "unipc",
+        16.0,
+        2025
+      ]
+    },
+    {
+      "id": 40,
+      "type": "VACE_VAELoader",
+      "pos": [
+        1600,
+        350
+      ],
+      "size": [
+        350,
+        100
+      ],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            6
+          ]
+        }
+      ],
+      "widgets_values": [
+        "Wan2.1_VAE.pth",
+        0
+      ]
+    },
+    {
+      "id": 50,
+      "type": "VAEDecode",
+      "pos": [
+        1600,
+        0
+      ],
+      "size": [
+        350,
+        100
+      ],
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 5
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            7
+          ]
+        }
+      ]
+    },
+    {
+      "id": 60,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        2000,
+        0
+      ],
+      "size": [
+        400,
+        300
+      ],
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Filenames",
+          "type": "VHS_FILENAMES"
+        }
+      ],
+      "widgets_values": [
+        16,
+        0,
+        "VACE_output",
+        "video/h264-mp4"
+      ]
+    },
+    {
+      "id": 70,
+      "type": "CLIPTextEncode",
+      "pos": [
+        560,
+        400
+      ],
+      "size": [
+        350,
+        150
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            4
+          ]
+        }
+      ],
+      "widgets_values": [
+        "ugly, watermark, low quality, bad hands, deformed, blurred"
+      ]
+    }
+  ],
+  "links": [
+    [1, 10, 0, 30, 2],
+    [2, 15, 0, 20, 0],
+    [3, 20, 0, 30, 1],
+    [4, 70, 0, 30, 3],
+    [5, 30, 0, 50, 0],
+    [6, 40, 0, 50, 1],
+    [7, 50, 0, 60, 0]
+  ]
+}
