@@ -291,7 +291,7 @@ class FramepackVace(WanT2V):
                  
                  
                  size=(1280, 720),
-                 frame_num=240,
+                 frame_num=41,
                  context_scale=1.0,
                  shift=5.0,
                  sample_solver='dpm++',
@@ -455,7 +455,7 @@ class FramepackVace(WanT2V):
             @contextmanager
             def noop_no_sync():
                 yield
-
+            sample_solver ='dpm++'
             no_sync = getattr(self.model, 'no_sync', noop_no_sync)
             # sample_solver='dpm++'
             # sampling_steps=20

@@ -19,6 +19,7 @@ import wan
 from wan.utils.utils import cache_video, cache_image, str2bool
 
 from models.wan import WanVace
+from models.wan import FramepackVace
 from models.wan.configs import WAN_CONFIGS, SIZE_CONFIGS, MAX_AREA_CONFIGS, SUPPORTED_SIZES
 from annotators.utils import get_annotator
 
@@ -32,8 +33,6 @@ EXAMPLE_PROMPT = {
         "prompt": "在一个欢乐而充满节日气氛的场景中，穿着鲜艳红色春服的小女孩正与她的可爱卡通蛇嬉戏。她的春服上绣着金色吉祥图案，散发着喜庆的气息，脸上洋溢着灿烂的笑容。蛇身呈现出亮眼的绿色，形状圆润，宽大的眼睛让它显得既友善又幽默。小女孩欢快地用手轻轻抚摸着蛇的头部，共同享受着这温馨的时刻。周围五彩斑斓的灯笼和彩带装饰着环境，阳光透过洒在她们身上，营造出一个充满友爱与幸福的新年氛围。"
     }
 }
-
-
 
 
 def validate_args(args):
@@ -59,7 +58,6 @@ def validate_args(args):
     assert args.size in SUPPORTED_SIZES[
         args.model_name], f"Unsupport size {args.size} for model name {args.model_name}, supported sizes are: {', '.join(SUPPORTED_SIZES[args.model_name])}"
     return args
-
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -180,7 +178,6 @@ def get_parser():
         help="Classifier free guidance scale.")
     return parser
 
-
 def _init_logging(rank):
     # logging
     if rank == 0:
@@ -191,7 +188,6 @@ def _init_logging(rank):
             handlers=[logging.StreamHandler(stream=sys.stdout)])
     else:
         logging.basicConfig(level=logging.ERROR)
-
 
 def main(args):
     args = argparse.Namespace(**args) if isinstance(args, dict) else args
@@ -271,7 +267,7 @@ def main(args):
         logging.info(f"Extended prompt: {args.prompt}")
 
     logging.info("Creating WanT2V pipeline.")
-    wan_vace = WanVace(
+    framepack_vace = FramepackVace(
         config=cfg,
         checkpoint_dir=args.ckpt_dir,
         device_id=device,
@@ -282,13 +278,13 @@ def main(args):
         t5_cpu=args.t5_cpu,
     )
 
-    src_video, src_mask, src_ref_images = wan_vace.prepare_source([args.src_video],
+    src_video, src_mask, src_ref_images = framepack_vace.prepare_source([args.src_video],
                                                                   [args.src_mask],
                                                                   [None if args.src_ref_images is None else args.src_ref_images.split(',')],
                                                                   args.frame_num, SIZE_CONFIGS[args.size], device)
 
     logging.info(f"Generating video...")
-    video = wan_vace.generate(
+    video = framepack_vace.generate_with_framepack(
         args.prompt,
         src_video,
         src_mask,
@@ -360,7 +356,6 @@ def main(args):
                 ret_data[f'src_ref_image_{i}'] = save_file
     logging.info("Finished.")
     return ret_data
-
 
 if __name__ == "__main__":
     args = get_parser().parse_args()
