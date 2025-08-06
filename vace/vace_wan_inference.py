@@ -221,7 +221,7 @@ def main(args):
         from xfuser.core.distributed import (initialize_model_parallel,
                                              init_distributed_environment)
         init_distributed_environment(
-            rank=dist.get_rank(), world_size=dist.get_world_size())
+            rank = dist.get_rank(), world_size=dist.get_world_size())
 
         initialize_model_parallel(
             sequence_parallel_degree=dist.get_world_size(),

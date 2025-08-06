@@ -8,11 +8,9 @@ import comfy.sd
 from ..models.wan.framepack_vace import FramepackVace
 from ..models.utils.preprocessor import VaceVideoProcessor
 
-
 class VACE_FRAMEPACK_MODEL_LOADER:
     @classmethod
     def INPUT_TYPES(s):
-        # Similar to DownloadAndLoadFramePackModel or LoadFramePackModel from HunyuanVideoWrapper.py
         return {
             "required": {
                 "ckpt_dir": ("STRING", {"default": "models/Wan2.1-VACE-1.3B/"}),
@@ -55,5 +53,4 @@ class VACE_FRAMEPACK_MODEL_LOADER:
             dit_fsdp=False,
             use_usp=False,
         )
-
         return (model_instance,)
