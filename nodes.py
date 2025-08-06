@@ -5,34 +5,39 @@ import comfy.utils
 import comfy.latent_formats
 import comfy.sd 
 
-from ..models.wan.framepack_vace import FramepackVace
-from ..models.utils.preprocessor import VaceVideoProcessor
+from models.wan.framepack_vace import FramepackVace
+from models.utils.preprocessor import VaceVideoProcessor
+
+class VACE_FRAMEPACK_MODEL_TYPE:
+    pass
+
+class VACE_SOURCE_DATA_TYPE:
+    pass
 
 class VACE_FRAMEPACK_MODEL_LOADER:
     @classmethod
     def INPUT_TYPES(s):
+        model_configs = ["vace-1.3B", "vace-14B"]
         return {
             "required": {
                 "ckpt_dir": ("STRING", {"default": "models/Wan2.1-VACE-1.3B/"}),
-                "model_config_name": (list(FramepackVace.get_supported_configs().keys()), {"default": "vace-1.3B"}), 
+                "model_config_name": (model_configs, {"default": "vace-1.3B"}),
                 "precision": (["bf16", "fp32", "fp16"], {"default": "bf16"}),
                 "device_id": ("INT", {"default": 0, "min": 0, "max": torch.cuda.device_count() - 1}),
-                # Optional: Add arguments for FSDP, USP if configurable at load time
                 "t5_cpu": ("BOOLEAN", {"default": False}),
             }
         }
 
-    RETURN_TYPES = ("FRAMEPACK_VACE_MODEL",)
+    RETURN_TYPES = ("VACE_FRAMEPACK_MODEL",)
     RETURN_NAMES = ("model",)
     FUNCTION = "load_model"
     CATEGORY = "VACE/Framepack"
     DESCRIPTION = "Loads the VACE Wan model with Framepack capabilities."
 
     def load_model(self, ckpt_dir, model_config_name, precision, device_id, t5_cpu):
-        from models.wan.configs.shared_config import WAN_CONFIGS # Assuming path
+        from vace.models.wan.configs import WAN_CONFIGS
         config = WAN_CONFIGS[model_config_name]
         
-        # Determine dtype
         param_dtype = {
             "bf16": torch.bfloat16,
             "fp32": torch.float32,
@@ -40,17 +45,66 @@ class VACE_FRAMEPACK_MODEL_LOADER:
         }[precision]
         config.param_dtype = param_dtype
 
-        # Instantiate FramepackVace
         model_instance = FramepackVace(
             config=config,
             checkpoint_dir=ckpt_dir,
             device_id=device_id,
-            rank=0, # Assuming single-node, rank 0 for ComfyUI
+            rank=0,
             t5_cpu=t5_cpu,
-            
-            # FSDP/USP arguments might need to be passed if the init handles them
             t5_fsdp=False,
             dit_fsdp=False,
             use_usp=False,
         )
+        
         return (model_instance,)
+    
+class VACE_FRAMEPACK_VIDEO_INPUT_PREPROCESSOR:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model": ("VACE_FRAMEPACK_MODEL",),
+                "num_frames": ("INT", {"default": 81, "min": 1}),
+                "output_width": ("INT", {"default": 768, "min": 64, "step": 8}),
+                "output_height": ("INT", {"default": 512, "min": 64, "step": 8}),
+            },
+            "optional": {
+                "video_path": ("STRING", {"default": "", "optional": True}),
+                "mask_path": ("STRING", {"default": "", "optional": True}),
+                "ref_image_paths": ("STRING", {"default": "", "optional": True, "tooltip": "Comma-separated paths to reference images."}),
+            }
+        }
+
+    RETURN_TYPES = ("VACE_SOURCE_DATA",)
+    RETURN_NAMES = ("source_data",)
+    FUNCTION = "preprocess_input"
+    CATEGORY = "VACE/Framepack"
+    DESCRIPTION = "Prepares source video, mask, and reference images for VACE Framepack generation."
+
+    def preprocess_input(self, model, video_path, mask_path, ref_image_paths, num_frames, output_width, output_height):
+        device = model.device
+        
+        src_video = [video_path if video_path else None]
+        src_mask = [mask_path if mask_path else None]
+        src_ref_images = [ref_image_paths.split(',') if ref_image_paths else None]
+
+        preprocessed_video, preprocessed_mask, preprocessed_ref_images = model.prepare_source(
+            src_video=src_video,
+            src_mask=src_mask,
+            src_ref_images=src_ref_images,
+            num_frames=num_frames,
+            image_size=(output_height, output_width),
+            device=device
+        )
+        
+        source_data = {
+            "src_video": preprocessed_video,
+            "src_mask": preprocessed_mask,
+            "src_ref_images": preprocessed_ref_images,
+            "output_width": output_width,
+            "output_height": output_height,
+            "num_frames": num_frames,
+            "device": device
+        }
+
+        return (source_data,)
