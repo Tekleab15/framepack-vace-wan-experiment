@@ -21,7 +21,6 @@ from vace.annotators.utils import single_rle_to_mask, read_video_frames, save_on
 from vace.configs import VACE_IMAGE_PREPROCCESS_CONFIGS, VACE_IMAGE_MASK_PREPROCCESS_CONFIGS, VACE_IMAGE_MASKAUG_PREPROCCESS_CONFIGS, VACE_VIDEO_PREPROCCESS_CONFIGS, VACE_VIDEO_MASK_PREPROCCESS_CONFIGS, VACE_VIDEO_MASKAUG_PREPROCCESS_CONFIGS, VACE_COMPOSITION_PREPROCCESS_CONFIGS
 import vace.annotators as annotators
 
-
 def tid_maker():
     return '{0:%Y%m%d%H%M%S%f}'.format(datetime.datetime.now())
 
@@ -31,7 +30,6 @@ def dict_to_markdown_table(d):
     for key, value in d.items():
         markdown += f"| {key} | {value} |\n"
     return markdown
-
 
 class VACEImageTag():
     def __init__(self, cfg):
@@ -317,7 +315,6 @@ class VACEImageTag():
         self.image_process_type.change(self.change_process_type, inputs=process_inputs, outputs=process_outputs)
         self.mask_process_type.change(self.change_process_type, inputs=process_inputs, outputs=process_outputs)
         self.mask_aug_process_type.change(self.change_process_type, inputs=process_inputs, outputs=process_outputs)
-
 
 class VACEVideoTag():
     def __init__(self, cfg):
@@ -648,8 +645,6 @@ class VACEVideoTag():
         self.mask_process_type.change(self.change_process_type, inputs=process_inputs, outputs=process_outputs)
         self.mask_aug_process_type.change(self.change_process_type, inputs=process_inputs, outputs=process_outputs)
 
-
-
 class VACETagComposition():
     def __init__(self, cfg):
         self.save_dir = os.path.join(cfg.save_dir, 'composition')
@@ -802,7 +797,6 @@ class VACETagComposition():
         self.save_button.click(self.save_composition_data,
                                inputs=[self.output_process_video, self.output_process_mask],
                                outputs=[self.save_log])
-
 
 class VACEVideoTool():
     def __init__(self, cfg):
@@ -1028,7 +1022,6 @@ class VACEVideoTool():
                                inputs=[self.output_process_image, self.output_process_video, self.output_process_mask],
                                outputs=[self.save_log])
 
-
 class VACETag():
 
     def __init__(self, cfg):
@@ -1065,7 +1058,6 @@ class VACETag():
         self.vace_image_tag.set_callbacks_image(**kwargs)
         self.vace_tag_composition.set_callbacks_composition(**kwargs)
         self.vace_video_tool.set_callbacks_video_tool(**kwargs)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Argparser for VACE-Preprocessor:\n')
