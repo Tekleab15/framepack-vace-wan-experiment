@@ -313,7 +313,7 @@ class FramepackVace(WanT2V):
         LATENT_WINDOW = 41  
         GENERATION_FRAMES = 30
         CONTEXT_FRAMES = 11
-        frame_num=300
+        # frame_num=300
         section_window = 41 
         section_num = math.ceil(frame_num / section_window)
 
@@ -457,8 +457,8 @@ class FramepackVace(WanT2V):
                 yield
 
             no_sync = getattr(self.model, 'no_sync', noop_no_sync)
-            sample_solver='dpm++'
-            sampling_steps=20
+            # sample_solver='dpm++'
+            # sampling_steps=20
             with amp.autocast(dtype=self.param_dtype), torch.no_grad(), no_sync():
                 # Setup scheduler
                 if sample_solver == 'dpm++':
@@ -516,12 +516,19 @@ class FramepackVace(WanT2V):
             if section_id == 0:
                 print(f"Section 0: Removing {1} reference frames from latent")
 
+                if section_num==1:
+                    latent_without_ref = latents[0]
+                    accumulated_latents.append(latent_without_ref)
 
-                latent_without_ref = latents[0][:, 1:-10, :, :]
-                accumulated_latents.append(latent_without_ref)
+
+                    all_generated_latents.append(latent_without_ref)
+                    
+                else: 
+                    latent_without_ref = latents[0][:, 1:-10, :, :]
+                    accumulated_latents.append(latent_without_ref)
 
 
-                all_generated_latents.append(latent_without_ref)
+                    all_generated_latents.append(latent_without_ref)
                
             else:
                 if section_id > 2:

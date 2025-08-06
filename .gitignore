@@ -20,3 +20,6 @@ vace.egg-info
 *.vscode
 /models/
 results/
+*.mp4
+*.png
+
