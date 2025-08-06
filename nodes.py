@@ -109,6 +109,31 @@ class VACE_FRAMEPACK_VIDEO_INPUT_PREPROCESSOR:
 
         return (source_data,)
 
+class VACE_VAELOADER:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "vae_name": (comfy.folder_paths.get_filename_list("vae"),),
+                "gpu_id": ("INT", {"default": 0, "min": 0, "max": torch.cuda.device_count() - 1, "tooltip": "GPU device ID to load VAE onto"}),
+            }
+        }
+    RETURN_TYPES = ("VAE",)
+    FUNCTION = "load_vae"
+    CATEGORY = "VACE/Framepack"
+    DESCRIPTION = "Loads a VAE model onto a specific GPU."
+
+    def load_vae(self, vae_name, gpu_id):
+        vae_path = comfy.folder_paths.get_full_path_or_raise("vae", vae_name)
+        target_device = torch.device(f"cuda:{gpu_id}")
+        
+        vae_sd = comfy.utils.load_torch_file(vae_path, safe_load=True) 
+        
+        # Using ComfyUI's VAE class for consistency
+        vae = comfy.sd.VAE(sd=vae_sd).eval()
+        
+        return (vae,)
+
 class VACE_FRAMEPACK_SAMPLER:
     @classmethod
     def INPUT_TYPES(s):
@@ -132,6 +157,7 @@ class VACE_FRAMEPACK_SAMPLER:
     CATEGORY = "VACE/Framepack"
     DESCRIPTION = "Generates video using VACE Framepack model."
     
+
     def sample_video(self, model, source_data, prompt, negative_prompt, sampling_steps, guide_scale,
                      sample_solver, sample_shift, seed):
         
@@ -141,7 +167,7 @@ class VACE_FRAMEPACK_SAMPLER:
         output_width = source_data["output_width"]
         output_height = source_data["output_height"]
         num_frames = source_data["num_frames"]
-        
+
         # ComfyUI often expects a dict for latent, so we convert src_video to that format
         generated_video = model.generate_with_framepack(
             input_prompt=prompt,
@@ -161,3 +187,4 @@ class VACE_FRAMEPACK_SAMPLER:
         
         # The ComfyUI LATENT format expects a dictionary with a 'samples' key
         return ({"samples": generated_video},)
+ 
