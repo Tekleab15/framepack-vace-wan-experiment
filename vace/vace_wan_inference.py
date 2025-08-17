@@ -355,7 +355,6 @@ def main(args):
     logging.info("Finished.")
     return ret_data
 
-
 if __name__ == "__main__":
     args = get_parser().parse_args()
     main(args)
